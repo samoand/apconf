@@ -1,0 +1,20 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "apconf"
+version = "1.0"
+description = "Application Configurator"
+authors = ["Andrew Samoylov <andrewsdaily@gmail.com>"]
+packages = [
+  { from = "src", include = "apconf" },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.11"
+PyYAML = "^6.0.1"
+jinja2 = "^3.1.4"
+pylint = "^3.2.5"
+
+[tool.poetry.scripts]

@@ -1,0 +1,36 @@
+kind: Config
+metadata:
+  name: logging_config
+spec:
+  version: 1
+  disable_existing_loggers: false
+  formatters:
+    standard:
+      format: "%(threadName)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s - %(asctime)s"
+  handlers:
+    console_handler:
+      level: ERROR
+      class: logging.StreamHandler
+      formatter: standard
+    file_handler:
+      level: WARNING
+      class: logging.handlers.RotatingFileHandler
+      formatter: standard
+      # log_path_desc will be normalized
+      # and the key converted to "filename"
+      # for compatibility with dictConfig
+      log_path_desc: >-
+        {{ project_root }}
+        artifacts
+        test
+        log
+        myapp.{{ proc_id }}.log
+      maxBytes: 65536
+      backupCount: 5000
+      encoding: utf8
+  loggers:
+    "root":
+      handlers:
+        - file_handler
+        - console_handler
+      level: WARNING

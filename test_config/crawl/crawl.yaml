@@ -1,0 +1,5 @@
+kind: Config
+metadata:
+  name: crawler_config
+spec:
+  num_workers: 30
