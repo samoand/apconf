@@ -35,8 +35,13 @@ _config_preprocessors:list[Callable[[dict], None]] = [
         keep_filt_keys=False),
     ]
 
-def __apply_log(updated_config:dict, _:dict, config_diff:dict) -> None:
-    if "logging_config" not in config_diff:
+def __apply_log(updated_config:dict,
+                _:dict,
+                config_diff_result:util.ConfigDiffResult) -> None:
+    if not any("logging_config" in d for d in
+           [config_diff_result.diff_changed,
+            config_diff_result.diff_added,
+            config_diff_result.diff_removed]):
         return
     logging_config = updated_config["logging_config"]["spec"]
     for _, handler in logging_config["handlers"].items():
@@ -45,7 +50,7 @@ def __apply_log(updated_config:dict, _:dict, config_diff:dict) -> None:
                 parents=True, exist_ok=True)
     logging.config.dictConfig(logging_config)
 
-_config_deployers:list[Callable[[dict, dict, dict], None]] = [
+_config_deployers:list[Callable[[dict, dict, util.ConfigDiffResult], None]] = [
     __apply_log
 ]
 
@@ -56,7 +61,7 @@ if __name__ == '__main__':
     config_root = os.path.join(project_root, "test_config")
     config = apconf.Config(
         config_root=config_root,
-        config_basenames=["crawl", "logging"],
+        config_basenames=["crawl", "logging-py"],
         template_params={
             "project_root": project_root,
             "proc_id": os.getpid()

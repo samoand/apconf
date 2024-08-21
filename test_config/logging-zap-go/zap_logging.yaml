@@ -1,0 +1,35 @@
+kind: Config
+metadata:
+  name: zap_logging_config
+spec:
+  # Global default log level for all outputs unless overridden
+  level: "info"  
+  cores:
+    console:
+      level: "error"
+      encoding: "console"
+      encoder:
+        timeKey: "time"
+        levelKey: "level"
+        nameKey: "logger"
+        callerKey: "caller"
+        messageKey: "message"
+        stacktraceKey: "stacktrace"
+        encodeLevel: "capital"
+        encodeTime: "iso8601"
+        encodeDuration: "seconds"
+        encodeCaller: "short"
+    rotating_file:
+      level: "warn"
+      encoding: "json"
+      outputPathDesc: >-
+        {{ project_root }}
+        artifacts
+        test
+        log
+        myapp.{{ proc_id }}.log
+      rotation:
+        maxSize: 10  # In megabytes
+        maxBackups: 100
+        maxAge: 7  # In days
+        compress: true

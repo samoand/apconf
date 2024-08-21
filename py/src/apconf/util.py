@@ -2,6 +2,12 @@
 import os
 from typing import Callable, Optional
 
+class ConfigDiffResult():
+    def __init__(self, diff_changed:dict, diff_added:dict, diff_removed:dict):
+        self.diff_changed = diff_changed
+        self.diff_added = diff_added
+        self.diff_removed = diff_removed
+
 def find_parent_dir(
         start_path,
         matchers:list[Callable[[str], bool]]) -> Optional[str]:
@@ -55,64 +61,46 @@ def find_git_root_or_error(start_path) -> str:
         start_path,
         [lambda path: os.path.isdir(os.path.join(path, '.git'))])
 
-def config_diff(config_new, config_old, preserve_missing=False):
+def config_diff(config_new, config_old) -> ConfigDiffResult:
     """
-    Return a dictionary with the elements from config_new that are
-      different from config_old.
-    Optionally preserves elements from config_old if they are
-      missing in config_new.
+    Return three dictionaries: one with the elements from config_new that are
+    different from config_old, one with elements that are in config_new but not
+    in config_old (added), and one with elements that are in config_old but not
+    in config_new (removed).
 
     Args:
         config_new (dict): The first dictionary to compare.
         config_old (dict): The second dictionary to compare.
-        preserve_old (bool): Whether to preserve elements
-          from config_old that are missing in config_new.
 
     Returns:
-        dict: A dictionary containing the elements from
-                config_new that differ from config_old.
-              If preserve_old is True, also includes elements
-                from config_old that are missing in config_new.
-
-    Example usage:
-    config_one = {
-        "a": 1,
-        "b": {
-            "c": 2,
-            "d": 3
-        },
-        "e": 4
-    }
-    
-    config_two = {
-        "a": 1,
-        "b": {
-            "c": 2,
-            "d": 4
-        },
-        "f": 5
-    }
-    
-    diff = config_diff(config_one, config_two)
-    print(diff)  # Output: {'b': {'d': 3}, 'e': 4}
-    
+        ConfigDiffResults: Three dictionaries:
+            - changed: Elements that differ between config_new and config_old.
+            - added: Elements that are in config_new but not in config_old.
+            - removed: Elements that are in config_old but not in config_new.
     """
-    diff_dict = {}
+    changed = {}
+    added = {}
+    removed = {}
 
     all_keys = set(config_new.keys()).union(config_old.keys())
 
     for key in all_keys:
         if key in config_new and key in config_old:
-            if isinstance(config_new[key], dict) and isinstance(
-                    config_old[key], dict):
+            if isinstance(config_new[key], dict
+                          ) and isinstance(config_old[key], dict):
                 nested_diff = config_diff(
-                    config_new[key], config_old[key], preserve_missing)
-                if nested_diff:  # Only add non-empty differences
-                    diff_dict[key] = nested_diff
+                    config_new[key], config_old[key])
+                if nested_diff.diff_changed:  # Only add non-empty differences
+                    changed[key] = nested_diff.diff_changed
+                if nested_diff.diff_added:  # Only add non-empty additions
+                    added[key] = nested_diff.diff_added
+                if nested_diff.diff_removed:  # Only add non-empty removals
+                    removed[key] = nested_diff.diff_removed
             elif config_new[key] != config_old[key]:
-                diff_dict[key] = config_new[key]
+                changed[key] = config_new[key]
         elif key in config_new:
-            diff_dict[key] = config_new[key]
-        elif key in config_old and preserve_missing:
-            diff_dict[key] = config_old[key]
-    return diff_dict
+            added[key] = config_new[key]
+        elif key in config_old:
+            removed[key] = config_old[key]
+
+    return ConfigDiffResult(changed, added, removed)

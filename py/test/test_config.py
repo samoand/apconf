@@ -17,8 +17,13 @@ def _path_from_desc(path_desc):
         os.path.join(
             *re.split(r'\s+', path_desc)))
 
-def _apply_log(new_config:dict, _:dict, config_diff:dict) -> None:
-    if "logging_config" not in config_diff:
+def _apply_log(new_config:dict,
+               _:dict,
+               config_diff_result:util.ConfigDiffResult) -> None:
+    if not any("logging_config" in d for d in
+           [config_diff_result.diff_changed,
+            config_diff_result.diff_added,
+            config_diff_result.diff_removed]):
         return
     logging_config = new_config["logging_config"]["spec"]
     for _, handler in logging_config["handlers"].items():
@@ -52,7 +57,8 @@ class TestConfig(unittest.TestCase):
                 value_transformer=lambda old_value: _path_from_desc(old_value),
                 keep_filt_keys=False),
         ]
-        config_deployers:list[Callable[[dict, dict, dict], None]] = [
+        config_deployers:list[
+            Callable[[dict, dict, util.ConfigDiffResult], None]] = [
             _apply_log
         ]
         project_root = os.path.normpath(
@@ -61,7 +67,7 @@ class TestConfig(unittest.TestCase):
         self.proc_id = os.getpid()
         self.config = apconf.Config(
             config_root=config_root,
-            config_basenames=["crawl", "logging"],
+            config_basenames=["crawl", "logging-py"],
             template_params={
                 "project_root": project_root,
                 "proc_id": self.proc_id
@@ -116,3 +122,6 @@ class TestConfig(unittest.TestCase):
         with open(self.configured_filename, "r", encoding='utf-8') as log_file:
             log_content = log_file.read()
             self.assertIn(info_msg, log_content)
+
+if __name__ == '__main__':
+    unittest.main()
