@@ -1,0 +1,62 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  python-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          path: apconf  # Checkout into apconf directory
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+
+      - name: Install dependencies
+        working-directory: apconf/py  # Correct working directory path
+        run: poetry install
+
+      - name: Run Python tests
+        working-directory: apconf/py  # Correct working directory path
+        env:
+          PYTHONPATH: src  # Add 'src' directory to PYTHONPATH
+        run: poetry run python -m unittest discover -s test
+
+  go-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          path: apconf  # Checkout into apconf directory
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+
+      - name: Install dependencies
+        working-directory: apconf/go  # Correct working directory path
+        run: go mod download
+
+      - name: Run Go tests
+        working-directory: apconf/go  # Correct working directory path
+        run: go test ./...

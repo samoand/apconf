@@ -1,0 +1,34 @@
+linters-settings:
+  lll:
+    line-length: 100
+  funlen:
+    lines: 120
+    statements: 80
+linters:
+  enable:
+    - copyloopvar
+    - depguard
+    - dupl
+    - errcheck
+    - funlen
+    - gochecknoglobals
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - prealloc
+    - revive
+    - staticcheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+issues:
+  exclude-dirs:
+    - gen

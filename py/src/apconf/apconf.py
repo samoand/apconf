@@ -16,20 +16,23 @@ class Config:
                  template_params:Optional[dict],
                  config_preprocessors:Optional[list[Callable[[dict], None]]],
                  config_deployers:Optional[
-                     list[Callable[[dict, dict, dict], None]]],
+                     list[Callable[[dict, dict, util.ConfigDiffResult], None]]],
                  config_validators:Optional[list[
-                     Callable[[dict, dict, dict], bool]]]):
+                     Callable[[dict, dict, util.ConfigDiffResult], bool]]]):
         """
         Init.
         Inputs:
         - config_root: str: root directory of the config dirs
         - config_preprocessors: list[Callable[[dict], None]]: list of mutators
             that will be applied to the config before it's deployed
-        - config_deployers: list[Callable[[dict, dict, dict], None]]: list of functions
-            that deploy the config.
-        - config_validators: list[Callable[[dict, dict, dict], None]]: list of functions
-            that validate the config. These function validate the config which
-            has already been mutated by the preprocessors.
+        - config_deployers:
+          list[Callable[[dict, dict, util.ConfigDiffResult], None]]:
+            list of functions that deploy the config.
+        - config_validators:
+          list[Callable[[dict, dict, util.ConfigDiffResult], None]]:
+            list of functions that validate the config.
+            These function validate the config which has already been
+            mutated by the preprocessors.
         """
         self.config_root = config_root
         self.config_basenames = config_basenames
@@ -64,20 +67,29 @@ class Config:
         for preprocessor in self.config_preprocessors:
             preprocessor(config)
 
-    def _validate(self, config_new:dict, config_diff:dict) -> bool:
+    def _validate(self,
+                  config_new:dict,
+                  config_diff_result:util.ConfigDiffResult) -> bool:
         """Deploy the config."""
         return True if self.config_validators is  None else all(
-            validator(config_new, self.config, config_diff) for
+            validator(config_new,
+                      self.config,
+                      config_diff_result) for
             validator in self.config_validators)
 
-    def _deploy(self, config_new:dict, config_diff:dict) -> Optional[list[Exception]]:
+    def _deploy(self,
+                config_new:dict,
+                config_diff_result:util.ConfigDiffResult) -> Optional[
+                    list[Exception]]:
         """Deploy the config."""
         exs:Optional[list[Exception]] = None
         if self.config_deployers is None:
             return exs
         for deployer in self.config_deployers:
             try:
-                deployer(config_new, self.config, config_diff)
+                deployer(config_new,
+                         self.config,
+                         config_diff_result)
             # pylint:disable=broad-exception-caught
             except Exception as e:
                 if exs is None:
@@ -92,10 +104,10 @@ class Config:
         - config: dict: config to post.
         """
         exs:Optional[list[Exception]] = None
-        config_diff = util.config_diff(
+        config_diff_result = util.config_diff(
             config_new=config, config_old=self.config)
         self._preprocess(config)
-        if self._validate(config, config_diff):
-            exs = self._deploy(config, config_diff)
+        if self._validate(config, config_diff_result):
+            exs = self._deploy(config, config_diff_result)
             self.config = config
         return exs
