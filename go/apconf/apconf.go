@@ -16,11 +16,11 @@ type Config struct {
 	config              map[string]any
 }
 
-type ApconfException struct {
+type Exception struct {
 	message string
 }
 
-func (e *ApconfException) Error() string {
+func (e *Exception) Error() string {
 	return e.message
 }
 
@@ -53,7 +53,7 @@ func (c *Config) init() {
 
 	for _, dir := range configDirs {
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
-			panic(&ApconfException{message: fmt.Sprintf("Config directory %s does not exist.", dir)})
+			panic(&Exception{message: fmt.Sprintf("Config directory %s does not exist.", dir)})
 		}
 	}
 

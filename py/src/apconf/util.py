@@ -3,6 +3,7 @@ import os
 from typing import Callable, Optional
 
 class ConfigDiffResult():
+    """Structure reflecting the result of config_diff operation."""
     def __init__(self, diff_changed:dict, diff_added:dict, diff_removed:dict):
         self.diff_changed = diff_changed
         self.diff_added = diff_added

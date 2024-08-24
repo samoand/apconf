@@ -3,7 +3,6 @@ package apconf
 import (
 	"bufio"
 	"fmt"
-	"go.uber.org/zap"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -12,26 +11,25 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+
+	"go.uber.org/zap"
 )
+
+type msa = map[string]any
 
 func pathFromDesc(pathDesc string) string {
 	re := regexp.MustCompile(`\s+`)
 	return filepath.Clean(filepath.Join(re.Split(pathDesc, -1)...))
 }
 
-func containsKey(m map[string]any, key string) bool {
-	_, exists := m[key]
-	return exists
-}
-
 func applyLogBuilder(atomicValue *atomic.Value) func(
-	newConfig map[string]any,
-	oldConfig map[string]any,
+	newConfig msa,
+	oldConfig msa,
 	configDiffResult ConfigDiffResult) error {
 
 	return func(
-		newConfig map[string]any,
-		_ map[string]any,
+		newConfig msa,
+		_ msa,
 		configDiffResult ConfigDiffResult) error {
 
 		// Check if logging config has changed
@@ -40,12 +38,12 @@ func applyLogBuilder(atomicValue *atomic.Value) func(
 		}
 
 		// Extract new logging configuration
-		logConfigMap := newConfig["zap_logging_config"].(map[string]any)["spec"].(map[string]any)
+		logConfigMap := newConfig["zap_logging_config"].(msa)["spec"].(msa)
 
 		// Ensure all necessary directories for output paths are created
-		cores := logConfigMap["cores"].(map[string]any)
+		cores := logConfigMap["cores"].(msa)
 		for _, core := range cores {
-			if coreMap, ok := core.(map[string]any); ok {
+			if coreMap, ok := core.(msa); ok {
 				if outputPath, ok := coreMap["outputPath"].(string); ok {
 					if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
 						return fmt.Errorf("failed to create output path directories: %w", err)
@@ -73,18 +71,19 @@ func applyLogBuilder(atomicValue *atomic.Value) func(
 	}
 }
 
+// nolint: funlen
 func TestConfig(t *testing.T) {
 	// Setup
-	configPreprocessors := []func(map[string]any){
+	configPreprocessors := []func(msa){
 		Preprocessor(
 			func(key string) bool { return key == "outputPathDesc" },
-			func(oldKey string) string { return "outputPath" },
+			func(_ string) string { return "outputPath" },
 			func(oldValue any) any { return pathFromDesc(oldValue.(string)) },
 			false,
 		),
 	}
 	var atomicValue atomic.Value
-	configDeployers := []func(map[string]any, map[string]any, ConfigDiffResult) error{
+	configDeployers := []func(msa, msa, ConfigDiffResult) error{
 		applyLogBuilder(&atomicValue),
 	}
 
@@ -103,7 +102,7 @@ func TestConfig(t *testing.T) {
 	cfg := NewConfig(
 		configRoot,
 		[]string{"crawl", "logging-zap-go"},
-		map[string]any{
+		msa{
 			"ProjectRoot": projectRoot,
 			"ProcId":      procID,
 		},
@@ -112,18 +111,27 @@ func TestConfig(t *testing.T) {
 		nil,
 	)
 
-	configuredFilename := cfg.config["zap_logging_config"].(map[string]any)["spec"].(map[string]any)["cores"].(map[string]any)["rotating_file"].(map[string]any)["outputPath"].(string)
+	// nolint: lll
+	configuredFilename := cfg.config["zap_logging_config"].(msa)["spec"].(msa)["cores"].(msa)["rotating_file"].(msa)["outputPath"].(string)
 
 	t.Run("test_init_config", func(t *testing.T) {
 		// See that "crawler" config is there.
-		if numWorkers, ok := cfg.config["crawler_config"].(map[string]any)["spec"].(map[string]any)["num_workers"]; !ok || numWorkers.(int) != 30 {
+		if numWorkers, ok := cfg.config["crawler_config"].(msa)["spec"].(msa)["num_workers"]; !ok ||
+			numWorkers.(int) != 30 {
 			t.Errorf("Expected 'num_workers' to be 30, but got %v", numWorkers)
 		}
 
 		// Check that "logging" config is properly set and enforced
-		logFileEnd := filepath.Join("artifacts", "test", "log", "myapp."+strconv.Itoa(procID)+".log") // Correct conversion using strconv.Itoa
+		logFileEnd := filepath.Join(
+			"artifacts",
+			"test",
+			"log",
+			"myapp."+strconv.Itoa(procID)+".log") // Correct conversion using strconv.Itoa
 		if !strings.HasSuffix(configuredFilename, logFileEnd) {
-			t.Errorf("Expected log filename to end with %s, but got %s", logFileEnd, configuredFilename)
+			t.Errorf(
+				"Expected log filename to end with %s, but got %s",
+				logFileEnd,
+				configuredFilename)
 		}
 
 		logger := atomicValue.Load().(*zap.Logger)
@@ -143,10 +151,11 @@ func TestConfig(t *testing.T) {
 		}
 	})
 
+	// nolint: lll
 	t.Run("test_modified_log_config", func(t *testing.T) {
 		newConfig := deepClone(cfg.config)
-		newConfig["zap_logging_config"].(map[string]any)["spec"].(map[string]any)["cores"].(map[string]any)["rotating_file"].(map[string]any)["level"] = "debug"
-		newConfig["zap_logging_config"].(map[string]any)["spec"].(map[string]any)["cores"].(map[string]any)["console"].(map[string]any)["level"] = "debug"
+		newConfig["zap_logging_config"].(msa)["spec"].(msa)["cores"].(msa)["rotating_file"].(msa)["level"] = "debug"
+		newConfig["zap_logging_config"].(msa)["spec"].(msa)["cores"].(msa)["console"].(msa)["level"] = "debug"
 
 		errs := cfg.apply(newConfig)
 		if errs != nil {

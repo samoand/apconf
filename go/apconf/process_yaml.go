@@ -23,7 +23,9 @@ func processYamlDirs(dirs []string, templateParams map[string]any) map[string]an
 		}
 
 		for _, entry := range entries {
-			if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") || filepath.Ext(entry.Name()) != ".yaml" {
+			if entry.IsDir() ||
+				strings.HasPrefix(entry.Name(), ".") ||
+				filepath.Ext(entry.Name()) != ".yaml" {
 				continue
 			}
 

@@ -224,7 +224,7 @@ func InitializeZapLogger(config *LogConfig) (
 }
 
 // Example function to log map[string]any as pretty JSON using zap.
-func logMapAsPrettyJSON(logger *zap.Logger, data map[string]any) {
+func LogMapAsPrettyJSON(logger *zap.Logger, data map[string]any) {
 	// Convert the map to pretty JSON
 	jsonData, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {

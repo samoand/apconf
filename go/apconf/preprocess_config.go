@@ -75,6 +75,12 @@ func Preprocessor(
 	keepFiltKeys bool,
 ) func(map[string]any) {
 	return func(config map[string]any) {
-		processDict(config, keyFilter, keyTransformer, valueTransformer, make(map[uintptr]struct{}), keepFiltKeys)
+		processDict(
+			config,
+			keyFilter,
+			keyTransformer,
+			valueTransformer,
+			make(map[uintptr]struct{}),
+			keepFiltKeys)
 	}
 }

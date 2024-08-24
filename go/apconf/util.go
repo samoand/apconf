@@ -36,10 +36,10 @@ type ConfigDiffResult struct {
 	Removed map[string]any
 }
 
-func (self ConfigDiffResult) Contains(path []string) bool {
-	return pathExistsInMap(self.Changed, path) ||
-		pathExistsInMap(self.Added, path) ||
-		pathExistsInMap(self.Removed, path)
+func (entity ConfigDiffResult) Contains(path []string) bool {
+	return pathExistsInMap(entity.Changed, path) ||
+		pathExistsInMap(entity.Added, path) ||
+		pathExistsInMap(entity.Removed, path)
 }
 
 func findParentDir(startPath string, matchers []func(string) bool) (string, error) {
@@ -65,6 +65,10 @@ func findGitRoot(startPath string) (string, error) {
 }
 
 func ConfigDiff(configNew, configOld map[string]any) ConfigDiffResult {
+	isMap := func(value any) bool {
+		_, ok := value.(map[string]any)
+		return ok
+	}
 	changed := make(map[string]any)
 	added := make(map[string]any)
 	removed := make(map[string]any)
@@ -81,35 +85,43 @@ func ConfigDiff(configNew, configOld map[string]any) ConfigDiffResult {
 		newValue, newExists := configNew[key]
 		oldValue, oldExists := configOld[key]
 
-		if newExists && oldExists {
+		switch {
+		case newExists && oldExists:
 			// Both exist, compare them
-			if reflect.TypeOf(newValue) == reflect.TypeOf(oldValue) {
-				if reflect.DeepEqual(newValue, oldValue) {
+			switch {
+			case reflect.TypeOf(newValue) == reflect.TypeOf(oldValue):
+				switch {
+				case reflect.DeepEqual(newValue, oldValue):
+					// If both values are deeply equal, continue to the next iteration
 					continue
-				}
+				case isMap(newValue) && isMap(oldValue):
+					// If both values are maps, perform a nested diff
+					newMap := newValue.(map[string]any)
+					oldMap := oldValue.(map[string]any)
+					nestedResult := ConfigDiff(newMap, oldMap)
 
-				if newMap, ok := newValue.(map[string]any); ok {
-					if oldMap, ok := oldValue.(map[string]any); ok {
-						nestedResult := ConfigDiff(newMap, oldMap)
-						if len(nestedResult.Changed) > 0 {
-							changed[key] = nestedResult.Changed
-						}
-						if len(nestedResult.Added) > 0 {
-							added[key] = nestedResult.Added
-						}
-						if len(nestedResult.Removed) > 0 {
-							removed[key] = nestedResult.Removed
-						}
+					if len(nestedResult.Changed) > 0 {
+						changed[key] = nestedResult.Changed
 					}
-				} else {
+					if len(nestedResult.Added) > 0 {
+						added[key] = nestedResult.Added
+					}
+					if len(nestedResult.Removed) > 0 {
+						removed[key] = nestedResult.Removed
+					}
+				default:
+					// Different values of the same type
 					changed[key] = newValue
 				}
-			} else {
+			default:
+				// Different types
 				changed[key] = newValue
 			}
-		} else if newExists {
+		case newExists:
+			// Only the new value exists
 			added[key] = newValue
-		} else if oldExists {
+		case oldExists:
+			// Only the old value exists
 			removed[key] = oldValue
 		}
 	}
