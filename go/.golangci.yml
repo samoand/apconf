@@ -6,7 +6,6 @@ linters-settings:
     statements: 80
 linters:
   enable:
-    - copyloopvar
     - depguard
     - dupl
     - errcheck

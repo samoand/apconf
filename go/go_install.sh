@@ -5,6 +5,11 @@ go_install_dir=$2
 os=$(echo "$3" | tr 'A-Z' 'a-z')
 arch=$4
 
+# if x86_64 change it to amd64
+if [ "$arch" = "x86_64" ]; then
+  arch="amd64"
+fi
+
 go_tarball="go${go_version}.${os}-${arch}.tar.gz"
 go_url="https://go.dev/dl/${go_tarball}"
 

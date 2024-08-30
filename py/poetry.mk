@@ -17,11 +17,12 @@ PY_VENV_DIR := $(WS_ROOT)/external/py/venv
 PY_VENV_BIN := $(PY_VENV_DIR)/bin
 
 ifeq ($(ARCH),arm64)
-SYSTEM_PYTHON := ~/.pyenv/versions/3.11.2/bin/python
-else ifeq ($(ARCH),x86_64)
-SYSTEM_PYTHON := /usr/local/bin/python3
+  SYSTEM_PYTHON := ~/.pyenv/versions/3.11.2/bin/python
 else
-$(error Unsupported architecture)
+  SYSTEM_PYTHON := $(shell which python)
+  ifeq ($(SYSTEM_PYTHON),)
+    $(error SYSTEM_PYTHON is not set. Please ensure Python is installed and available in the system PATH.)
+  endif
 endif
 
 .PHONY: poetry-install, poetry-local-install
