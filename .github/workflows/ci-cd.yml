@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Python tests
         working-directory: apconf/py  # Correct working directory path
-        run: python -m unittest discover -s src/test
+        run: python -m unittest discover -s test
 
   go-build:
     runs-on: ubuntu-latest
