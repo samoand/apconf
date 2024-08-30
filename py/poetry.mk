@@ -13,7 +13,6 @@ else
 PIP_NO_CACHE_DIR_STR :=
 endif
 
-
 PY_VENV_DIR := $(WS_ROOT)/external/py/venv
 PY_VENV_BIN := $(PY_VENV_DIR)/bin
 
@@ -59,16 +58,16 @@ $(PY_POETRY_LOCAL_INSTALL_TIMESTAMP): $(PY_PROJECT_TOML) $(PY_VENV_DIR)
 
 py-req-install: $(wildcard $(PY_REQUIREMENTS)) $(wildcard $(PY_LOCAL_REQUIREMENTS))
 	$(MAKE) clean-temp-reqs
-	@if [ -f ${PY_REQUIREMENTS} ]; then \
-		cp ${PY_REQUIREMENTS} ${PY_TEMP_COMBINED_REQUIREMENTS}; \
+	@if [ -f $(PY_REQUIREMENTS) ]; then \
+		cp $(PY_REQUIREMENTS) $(PY_TEMP_COMBINED_REQUIREMENTS); \
 	fi
-	@if  [ -f ${PY_LOCAL_REQUIREMENTS} ]; then \
+	@if  [ -f $(PY_LOCAL_REQUIREMENTS) ]; then \
 		while IFS= read -r line; do \
 			export PROJECT_PY_DIR="$(PROJECT_PY_DIR)"; \
 			export MAKEFILEDIR="$(MAKEFILEDIR)"; \
-			resolved_line=$$(echo $$line | sed 's@\$$${PROJECT_PY_DIR}@'"$$PROJECT_PY_DIR"'@g' | sed 's@\$$${MAKEFILEDIR}@'"$$MAKEFILEDIR"'@g' | envsubst | xargs realpath); \
-			echo "-e $$resolved_line" >> ${PY_TEMP_COMBINED_REQUIREMENTS}; \
-		done < ${PY_LOCAL_REQUIREMENTS}; \
+			resolved_line=$$(echo $$line | sed 's@\$$$(PROJECT_PY_DIR)@'"$$PROJECT_PY_DIR"'@g' | sed 's@\$$$(MAKEFILEDIR)@'"$$MAKEFILEDIR"'@g' | envsubst | xargs realpath); \
+			echo "-e $$resolved_line" >> $(PY_TEMP_COMBINED_REQUIREMENTS); \
+		done < $(PY_LOCAL_REQUIREMENTS); \
 	fi
 	@if [ -f $(PY_TEMP_COMBINED_REQUIREMENTS) ]; then \
 		$(PY_VENV_DIR)/bin/pip install --upgrade pip; \
@@ -80,7 +79,7 @@ py-req-install: $(wildcard $(PY_REQUIREMENTS)) $(wildcard $(PY_LOCAL_REQUIREMENT
 
 clean-temp-reqs:
 	@if [ -f $(PY_TEMP_COMBINED_REQUIREMENTS) ]; then \
-		rm -f ${PY_TEMP_COMBINED_REQUIREMENTS}; \
+		rm -f $(PY_TEMP_COMBINED_REQUIREMENTS); \
 	fi
 
 py-install: poetry-local-install py-req-install
