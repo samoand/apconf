@@ -1,10 +1,12 @@
 # Application Configurator
 
-This Python library simplifies the declaration and management of configurations using an easy-to-read, Kubernetes-like format. It supports dynamic changes and offers APIs for deploying configurations.
+This library simplifies the declaration and management of configurations using an easy-to-read, Kubernetes-like format. It supports dynamic changes and offers APIs for deploying configurations.
 
 The library addresses the challenge of managing multiple complex configurations linked to various deployment scenarios while maintaining the same application logic.
 
 Users can break down configurations into different profiles, store these profiles in respective directories, and specify the relevant combination of these directories during initialization.
+
+Available for Python and Go.
 
 ## Features
 
@@ -24,7 +26,7 @@ This sample focuses on logging configuration as an example.
 
 ### Example Test
 
-Refer to `py/test/*.py`
+Refer to `py/test/*.py` and `go/apconf/*_test.go`
 
 ### Sample Config Snippets
 
