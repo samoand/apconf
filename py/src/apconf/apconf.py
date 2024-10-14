@@ -8,6 +8,7 @@ from . import util
 class ApconfException(Exception):
     """Module-level exception."""
 
+# pylint:disable=too-many-positional-arguments
 class Config:
     """ Config holder."""
     def __init__(self,

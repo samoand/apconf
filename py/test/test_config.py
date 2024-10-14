@@ -3,12 +3,11 @@
 import copy
 import logging.config
 import os
-from pathlib import Path
 import re
 from typing import Callable
 import unittest
 
-from apconf import apconf, preprocess_config, util
+from apconf import apconf, preprocess_config, util, cc_plugins
 
 logger = logging.getLogger(__name__)
 
@@ -16,22 +15,6 @@ def _path_from_desc(path_desc):
     return os.path.normpath(
         os.path.join(
             *re.split(r'\s+', path_desc)))
-
-def _apply_log(new_config:dict,
-               _:dict,
-               config_diff_result:util.ConfigDiffResult) -> None:
-    if not any("logging_config" in d for d in
-           [config_diff_result.diff_changed,
-            config_diff_result.diff_added,
-            config_diff_result.diff_removed]):
-        return
-    logging_config = new_config["logging_config"]["spec"]
-    for _, handler in logging_config["handlers"].items():
-        if "filename" in handler:
-            Path(handler["filename"]).parent.mkdir(
-                parents=True, exist_ok=True)
-
-    logging.config.dictConfig(logging_config)
 
 class TestConfig(unittest.TestCase):
     """
@@ -59,7 +42,7 @@ class TestConfig(unittest.TestCase):
         ]
         config_deployers:list[
             Callable[[dict, dict, util.ConfigDiffResult], None]] = [
-            _apply_log
+            cc_plugins.apply_log
         ]
         project_root = os.path.normpath(
             util.find_git_root_or_error(os.path.realpath(__file__)))

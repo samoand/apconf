@@ -1,4 +1,5 @@
 """Post-processing functions for config."""
+# pylint:disable=too-many-positional-arguments
 from typing import Callable
 
 def _process_list(lst,
