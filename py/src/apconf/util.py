@@ -2,12 +2,61 @@
 import os
 from typing import Callable, Optional
 
-class ConfigDiffResult():
-    """Structure reflecting the result of config_diff operation."""
-    def __init__(self, diff_changed:dict, diff_added:dict, diff_removed:dict):
+class ConfigDiffResult:
+    """
+    Structure reflecting the result of config_diff operation.
+
+    Attributes:
+        diff_changed: Keys with changed values between old and new config
+        diff_added: Keys only in new config (added)
+        diff_removed: Keys only in old config (removed)
+
+    Supports intuitive membership testing:
+        >>> "logging_config" in diff_result  # Checks all three dicts
+        True
+
+    Supports boolean testing:
+        >>> if diff_result:  # True if any changes exist
+        ...     apply_changes()
+    """
+
+    def __init__(
+            self,
+            diff_changed: dict[str, object],
+            diff_added: dict[str, object],
+            diff_removed: dict[str, object]
+    ) -> None:
         self.diff_changed = diff_changed
         self.diff_added = diff_added
         self.diff_removed = diff_removed
+
+    def __contains__(self, key: str) -> bool:
+        """
+        Check if key is in any of the diff dicts (changed, added, or removed).
+
+        This allows intuitive usage like:
+            if "logging_config" in config_diff:
+                apply_logging(config)
+        """
+        return (key in self.diff_changed or
+                key in self.diff_added or
+                key in self.diff_removed)
+
+    def __bool__(self) -> bool:
+        """
+        Return True if there are any changes (changed, added, or removed).
+
+        This allows intuitive usage like:
+            if config_diff:
+                deploy_changes()
+        """
+        return bool(self.diff_changed or self.diff_added or self.diff_removed)
+
+    def __repr__(self) -> str:
+        """Return a readable representation."""
+        return (f"ConfigDiffResult(changed={list(self.diff_changed.keys())}, "
+                f"added={list(self.diff_added.keys())}, "
+                f"removed={list(self.diff_removed.keys())})")
 
 def find_parent_dir(
         start_path,
@@ -62,7 +111,9 @@ def find_git_root_or_error(start_path) -> str:
         start_path,
         [lambda path: os.path.isdir(os.path.join(path, '.git'))])
 
-def config_diff(config_new, config_old) -> ConfigDiffResult:
+def config_diff(
+        config_new: dict[str, object],
+        config_old: dict[str, object]) -> ConfigDiffResult:
     """
     Return three dictionaries: one with the elements from config_new that are
     different from config_old, one with elements that are in config_new but not
