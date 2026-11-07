@@ -60,3 +60,4 @@ default.etcd
 /artifacts/
 .poetry-local-install.timestamp
 .poetry-install.timestamp
+.DS_Store
