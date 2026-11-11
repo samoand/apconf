@@ -81,6 +81,13 @@ class Config:
 
     def _init(self) -> None:
         """Load config from YAML files and apply it."""
+        self.reload()
+
+    def reload(self) -> Optional[list[Exception]]:
+        """Re-read the YAML files and apply the result.
+
+        Returns what :meth:`apply` returns.
+        """
         config_dirs = [os.path.join(self.config_root, config_dir) for
                        config_dir in self.config_basenames]
 
@@ -91,7 +98,7 @@ class Config:
 
         config = process_yaml.process_yaml_dirs(
             config_dirs, self.template_params)["Config"]
-        self.apply(config)
+        return self.apply(config)
 
     def _preprocess(self, config: ConfigDict) -> None:
         """

@@ -106,5 +106,15 @@ class TestConfig(unittest.TestCase):
             log_content = log_file.read()
             self.assertIn(info_msg, log_content)
 
+    def test_reload_restores_files(self):
+        """Reload discards an applied change the files don't hold."""
+        new_config = copy.deepcopy(self.config.config)
+        new_config["crawler_config"]["spec"]["num_workers"] = 31
+        self.config.apply(new_config)
+        self.assertIsNone(self.config.reload())
+        self.assertEqual(
+            self.config.config["crawler_config"]["spec"]["num_workers"],
+            30)
+
 if __name__ == '__main__':
     unittest.main()
