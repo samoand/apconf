@@ -20,7 +20,7 @@ Available for Python and Go.
 
 ### Sample Usage
 
-Refer to the `py/src/scripts/sample-main.py` for an example of how to use this library
+Refer to the `py/src/scripts/sample_main.py` for an example of how to use this library
 
 This sample focuses on logging configuration as an example.
 
